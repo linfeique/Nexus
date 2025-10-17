@@ -1,0 +1,19 @@
+﻿services:
+  nexus.api:
+    image: nexus.api
+    build:
+      context: .
+      dockerfile: Nexus.Api/Dockerfile
+
+  nexus.projections:
+    image: nexus.projections
+    build:
+      context: .
+      dockerfile: Nexus.Projections/Dockerfile
+
+  nexus.silo:
+    image: nexus.silo
+    build:
+      context: .
+      dockerfile: Nexus.Silo/Dockerfile
+
