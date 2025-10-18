@@ -9,12 +9,19 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.9"/>
+        <PackageReference Include="Microsoft.Orleans.Client" Version="9.2.1" />
+        <PackageReference Include="Microsoft.Orleans.Clustering.AdoNet" Version="9.2.1" />
+        <PackageReference Include="Scalar.AspNetCore" Version="2.9.0" />
     </ItemGroup>
 
     <ItemGroup>
       <Content Include="..\.dockerignore">
         <Link>.dockerignore</Link>
       </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Nexus.Grains\Nexus.Grains.csproj" />
     </ItemGroup>
 
 </Project>

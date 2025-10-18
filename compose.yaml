@@ -5,11 +5,11 @@
       context: .
       dockerfile: Nexus.Api/Dockerfile
 
-  nexus.projections:
-    image: nexus.projections
-    build:
-      context: .
-      dockerfile: Nexus.Projections/Dockerfile
+#  nexus.projections:
+#    image: nexus.projections
+#    build:
+#      context: .
+#      dockerfile: Nexus.Projections/Dockerfile
 
   nexus.silo:
     image: nexus.silo
