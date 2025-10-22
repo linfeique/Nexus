@@ -6,8 +6,6 @@ using Orleans.Configuration;
 await Host.CreateDefaultBuilder(args)
     .UseOrleans(builder =>
     {
-        var configuration = builder.Configuration;
-        
         const string databaseConnectionString = 
             "Host=localhost;Port=5433;Username=postgres;Password=0202;Database=NexusOrleans";
         
@@ -28,5 +26,7 @@ await Host.CreateDefaultBuilder(args)
             options.ConnectionString = databaseConnectionString;
             options.Invariant = SiloConstants.StorageInvariant;
         });
+
+        builder.AddActivityPropagation();
     })
     .RunConsoleAsync();
