@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Nexus.Grains.Features.Restaurants;
 
-namespace Nexus.Api.Controllers;
+namespace Nexus.Api.Features.Restaurants;
 
 [ApiController]
 [Route("[controller]")]
+[Authorize]
 public class RestaurantsController : ControllerBase
 {
     [HttpGet("{id:guid}")]

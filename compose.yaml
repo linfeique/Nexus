@@ -1,9 +1,22 @@
 ﻿services:
-  nexus.api:
-    image: nexus.api
-    build:
-      context: .
-      dockerfile: Nexus.Api/Dockerfile
+  postgres:
+    image: postgres:latest
+    container_name: nexus.postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: orleans
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/init_orleans.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 #  nexus.projections:
 #    image: nexus.projections
@@ -16,4 +29,52 @@
     build:
       context: .
       dockerfile: Nexus.Silo/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      CLUSTER_ID: "NexusClusterDev"
+      SERVICE_ID: "NexusServiceDev"
+      STORAGE_NAME: "NexusStorageDev"
+      STORAGE_INVARIANT: "Npgsql"
+      CONNECTIONSTRINGS__ORLEANS: "Host=postgres;Port=5432;Database=NexusOrleans;Username=postgres;Password=123456"
+      
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=nexus-api,service.namespace=nexus-group,deployment.environment=development"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "https://otlp-gateway-prod-sa-east-1.grafana.net/otlp"
+      OTEL_EXPORTER_OTLP_HEADERS: "Authorization=Basic MTQxMjc5MTpnbGNfZXlKdklqb2lNVFUyTnpBMk9DSXNJbTRpT2lKdVpYaDFjeTEwYjJ0bGJpSXNJbXNpT2lKSVpESXpXamhvTlRjMFF6UkxaM1EzUWtoVVF6WnBORllpTENKdElqcDdJbklpT2lKd2NtOWtMWE5oTFdWaGMzUXRNU0o5ZlE9PQ=="
+      OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+    ports:
+      - "11111:11111" # Silo port
+      - "30000:30000" # Gateway port
+    networks:
+      - nexus-network
+  
+  nexus.api:
+    image: nexus.api
+    build:
+      context: .
+      dockerfile: Nexus.Api/Dockerfile
+    depends_on:
+      - nexus.silo
+    environment:
+      CLUSTER_ID: "NexusClusterDev"
+      SERVICE_ID: "NexusServiceDev"
+      STORAGE_NAME: "NexusStorageDev"
+      STORAGE_INVARIANT: "Npgsql"
+      CONNECTIONSTRINGS__ORLEANS: "Host=postgres;Port=5432;Database=NexusOrleans;Username=postgres;Password=123456"
 
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=nexus-api,service.namespace=nexus-group,deployment.environment=development"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "https://otlp-gateway-prod-sa-east-1.grafana.net/otlp"
+      OTEL_EXPORTER_OTLP_HEADERS: "Authorization=Basic MTQxMjc5MTpnbGNfZXlKdklqb2lNVFUyTnpBMk9DSXNJbTRpT2lKdVpYaDFjeTEwYjJ0bGJpSXNJbXNpT2lKSVpESXpXamhvTlRjMFF6UkxaM1EzUWtoVVF6WnBORllpTENKdElqcDdJbklpT2lKd2NtOWtMWE5oTFdWaGMzUXRNU0o5ZlE9PQ=="
+      OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+    ports:
+      - "5000:8080"
+    networks:
+      - nexus-network
+
+volumes:
+  pgdata:
+
+networks:
+  nexus-network:
+    driver: bridge

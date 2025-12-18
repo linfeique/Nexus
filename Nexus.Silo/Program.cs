@@ -1,30 +1,26 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Nexus.Infrastructure;
 using Orleans.Configuration;
 
 await Host.CreateDefaultBuilder(args)
     .UseOrleans(builder =>
     {
-        const string databaseConnectionString = 
-            "Host=localhost;Port=5433;Username=postgres;Password=0202;Database=NexusOrleans";
-        
         builder.UseAdoNetClustering(options =>
         {
-            options.ConnectionString = databaseConnectionString;
-            options.Invariant = SiloConstants.StorageInvariant;
+            options.ConnectionString = builder.Configuration.GetConnectionString("Orleans");
+            options.Invariant = builder.Configuration.GetValue<string>("STORAGE_INVARIANT");
         });
 
         builder.Configure<ClusterOptions>(options =>
         {
-            options.ClusterId = SiloConstants.ClusterId;
-            options.ServiceId = SiloConstants.ServiceId;
+            options.ClusterId = builder.Configuration.GetValue<string>("CLUSTER_ID");
+            options.ServiceId = builder.Configuration.GetValue<string>("SERVICE_ID");
         });
 
-        builder.AddAdoNetGrainStorage(SiloConstants.StorageName, options =>
+        builder.AddAdoNetGrainStorage(builder.Configuration.GetValue<string>("OrleansStorageDev"), options =>
         {
-            options.ConnectionString = databaseConnectionString;
-            options.Invariant = SiloConstants.StorageInvariant;
+            options.ConnectionString = builder.Configuration.GetConnectionString("Orleans");
+            options.Invariant = builder.Configuration.GetValue<string>("STORAGE_INVARIANT");
         });
 
         builder.AddActivityPropagation();

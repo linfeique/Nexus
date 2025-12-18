@@ -6,9 +6,10 @@ namespace Nexus.Grains.Features.Restaurants;
 public class RestaurantGrain : Grain, IRestaurantGrain
 {
     private readonly IPersistentState<RestaurantState> _restaurantState;
-
+    
     public RestaurantGrain(
-        [PersistentState(RestaurantState.StateName, SiloConstants.StorageName)] IPersistentState<RestaurantState> restaurantState)
+        [PersistentState(RestaurantState.StateName, SiloConstants.StorageName)] 
+        IPersistentState<RestaurantState> restaurantState)
     {
         _restaurantState = restaurantState;
     }

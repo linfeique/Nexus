@@ -1,4 +1,11 @@
-using Nexus.Infrastructure;
+using System.Reflection;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Nexus.Api.Auth;
+using Nexus.Infrastructure.Abstractions;
 using Npgsql;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -12,13 +19,79 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
+builder.Host.UseOrleansClient((context, clientBuilder) =>
+{
+    clientBuilder.UseAdoNetClustering(options =>
+    {
+        options.ConnectionString = context.Configuration.GetConnectionString("Orleans");
+        options.Invariant = context.Configuration.GetValue<string>("STORAGE_INVARIANT");
+    });
+    
+    clientBuilder.Configure<ClusterOptions>(options => 
+    {
+        options.ClusterId = context.Configuration.GetValue<string>("CLUSTER_ID");
+        options.ServiceId = context.Configuration.GetValue<string>("SERVICE_ID");
+    });
+
+    clientBuilder.AddActivityPropagation();
+});
+
+builder.Services.AddDbContext<AuthDbContext>(options =>
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+
+builder.Services
+    .AddIdentity<User, IdentityRole>()
+    .AddEntityFrameworkStores<AuthDbContext>();
+
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters.ValidIssuer = builder.Configuration["JwtConfig:Issuer"];
+        options.TokenValidationParameters.ValidAudience = builder.Configuration["JwtConfig:Audience"];
+        options.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["JwtConfig:SecretKey"]!));
+        
+        options.TokenValidationParameters.ValidateIssuer = true;
+        options.TokenValidationParameters.ValidateAudience = true;
+        options.TokenValidationParameters.ValidateLifetime = true;
+        options.TokenValidationParameters.ValidateIssuerSigningKey = true;
+    });
+
+builder.Services.AddAuthorization();
+
+builder.Services.Configure<IdentityOptions>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequiredLength = 6;
+    options.Password.RequiredUniqueChars = 1;
+    
+    options.User.AllowedUserNameCharacters =
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+    options.User.RequireUniqueEmail = true;
+});
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+
+    options.SlidingExpiration = true;
+});
+
 builder.Logging.AddOpenTelemetry(logging =>
 {
     logging.IncludeScopes = true;
     logging.IncludeFormattedMessage = true;
 });
-
-Console.WriteLine(Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT"));
 
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(r => r.AddService("nexus-api", serviceNamespace: "nexus-group"))
@@ -38,22 +111,19 @@ builder.Services.AddOpenTelemetry()
             .AddSource("Microsoft.Orleans.Application"))
     .UseOtlpExporter();
 
-builder.Host.UseOrleansClient((context, clientBuilder) =>
+var handlers = Assembly.GetExecutingAssembly()
+    .GetTypes()
+    .Where(d => d is { IsClass: true, IsAbstract: false } 
+                && d.GetInterfaces().Any(i => i.IsGenericType && 
+                                              i.GetGenericTypeDefinition() == typeof(IHandler<,>)));
+
+foreach (var handler in handlers)
 {
-    clientBuilder.UseAdoNetClustering(options =>
-    {
-        options.ConnectionString = context.Configuration.GetConnectionString("DefaultConnection");
-        options.Invariant = SiloConstants.StorageInvariant;
-    });
-
-    clientBuilder.Configure<ClusterOptions>(options =>
-    {
-        options.ClusterId = SiloConstants.ClusterId;
-        options.ServiceId = SiloConstants.ServiceId;
-    });
-
-    clientBuilder.AddActivityPropagation();
-});
+    var interfaceType = handler.GetInterfaces()
+        .First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IHandler<,>));
+    
+    builder.Services.AddScoped(interfaceType, handler);
+}
 
 var app = builder.Build();
 
@@ -61,10 +131,13 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
+    
+    await app.ApplyMigrations();
 }
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication(); 
 app.UseAuthorization();
 
 app.MapControllers();
