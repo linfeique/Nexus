@@ -23,14 +23,14 @@ builder.Host.UseOrleansClient((context, clientBuilder) =>
 {
     clientBuilder.UseAdoNetClustering(options =>
     {
-        options.ConnectionString = context.Configuration.GetConnectionString("Orleans");
-        options.Invariant = context.Configuration.GetValue<string>("STORAGE_INVARIANT");
+        options.ConnectionString = context.Configuration.GetConnectionString("Nexus");
+        options.Invariant = context.Configuration.GetValue<string>("OrleansConfig:StorageInvariant");
     });
     
     clientBuilder.Configure<ClusterOptions>(options => 
     {
-        options.ClusterId = context.Configuration.GetValue<string>("CLUSTER_ID");
-        options.ServiceId = context.Configuration.GetValue<string>("SERVICE_ID");
+        options.ClusterId = context.Configuration.GetValue<string>("OrleansConfig:ClusterId");
+        options.ServiceId = context.Configuration.GetValue<string>("OrleansConfig:ServiceId");
     });
 
     clientBuilder.AddActivityPropagation();
@@ -38,7 +38,7 @@ builder.Host.UseOrleansClient((context, clientBuilder) =>
 
 builder.Services.AddDbContext<AuthDbContext>(options =>
 {
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Auth"));
 });
 
 builder.Services
@@ -117,12 +117,17 @@ var handlers = Assembly.GetExecutingAssembly()
                 && d.GetInterfaces().Any(i => i.IsGenericType && 
                                               i.GetGenericTypeDefinition() == typeof(IHandler<,>)));
 
-foreach (var handler in handlers)
+foreach (var implType in handlers)
 {
-    var interfaceType = handler.GetInterfaces()
-        .First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IHandler<,>));
-    
-    builder.Services.AddScoped(interfaceType, handler);
+    builder.Services.AddScoped(implType);
+
+    var serviceTypes = implType.GetInterfaces()
+        .Where(i => i.IsGenericType &&
+                    i.GetGenericTypeDefinition() == typeof(IHandler<,>))
+        .ToArray();
+
+    foreach (var serviceType in serviceTypes)
+        builder.Services.AddScoped(serviceType, implType);
 }
 
 var app = builder.Build();

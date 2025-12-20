@@ -26,7 +26,7 @@ public class LoginUseCase(
     {
         var user = await userManager.FindByEmailAsync(request.Email);
         if (user is null ||
-            await userManager.CheckPasswordAsync(user, request.Password))
+            !await userManager.CheckPasswordAsync(user, request.Password))
         {
             return Result.Unauthorized();
         }
@@ -34,24 +34,24 @@ public class LoginUseCase(
         var roles = await userManager.GetRolesAsync(user);
         
         var signingKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(configuration["Jwt:SecretKey"]!));
+            Encoding.UTF8.GetBytes(configuration["JwtConfig:SecretKey"]!));
         var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
 
         List<Claim> claims = 
         [
             new(JwtRegisteredClaimNames.Sub, user.Id),
             new(JwtRegisteredClaimNames.Email, user.Email!),
-            new("RestaurantId", user.RestaurantId.ToString()),
+            new(nameof(user.RestaurantId), user.RestaurantId.ToString()),
             ..roles.Select(role => new Claim(ClaimTypes.Role, role))
         ];
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddMinutes(configuration.GetValue<int>("Jwt:ExpirationInMinutes")),
+            Expires = DateTime.UtcNow.AddMinutes(configuration.GetValue<int>("JwtConfig:ExpirationInMinutes")),
             SigningCredentials = credentials,
-            Issuer = configuration["Jwt:Issuer"],
-            Audience = configuration["Jwt:Audience"]
+            Issuer = configuration["JwtConfig:Issuer"],
+            Audience = configuration["JwtConfig:Audience"]
         };
         var tokenHandler = new JsonWebTokenHandler();
         
