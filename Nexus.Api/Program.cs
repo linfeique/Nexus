@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using Nexus.Api.Abstractions;
 using Nexus.Api.Abstractions.UseCases;
 using Nexus.Api.Auth;
+using Nexus.Api.Auth.Actor;
 using Nexus.Api.Extensions;
 using Npgsql;
 using OpenTelemetry;
@@ -23,6 +24,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+
+builder.Services.AddLogging();
 
 builder.Host.UseOrleansClient((context, clientBuilder) =>
 {
@@ -104,6 +107,9 @@ builder.Services.ConfigureApplicationCookie(options =>
 
     options.SlidingExpiration = true;
 });
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IActor, Actor>();
 
 builder.Logging.AddOpenTelemetry(logging =>
 {
