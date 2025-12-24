@@ -1,13 +1,14 @@
 ﻿using Ardalis.Result;
 using Microsoft.AspNetCore.Identity;
+using Nexus.Api.Abstractions;
+using Nexus.Api.Abstractions.UseCases;
 using Nexus.Api.Auth;
-using Nexus.Infrastructure.Abstractions;
 
 namespace Nexus.Api.Features.Users.Cases;
 
 public record RegisterUseCaseRequest(
     string Email,
-    string Password) : ICommand;
+    string Password) : IUseCaseCommand;
 
 public record RegisterUseCaseResponse(
     Guid UserId,
@@ -16,7 +17,7 @@ public record RegisterUseCaseResponse(
 
 public class RegisterUseCase(
     AuthDbContext dbContext,
-    UserManager<User> userManager) : IHandler<RegisterUseCaseRequest, Result<RegisterUseCaseResponse>>
+    UserManager<User> userManager) : IUseCaseHandler<RegisterUseCaseRequest, Result<RegisterUseCaseResponse>>
 {
     public async Task<Result<RegisterUseCaseResponse>> Handle(
         RegisterUseCaseRequest request,

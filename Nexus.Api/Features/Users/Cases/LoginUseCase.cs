@@ -4,21 +4,22 @@ using Ardalis.Result;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
+using Nexus.Api.Abstractions;
+using Nexus.Api.Abstractions.UseCases;
 using Nexus.Api.Auth;
-using Nexus.Infrastructure.Abstractions;
 
 namespace Nexus.Api.Features.Users.Cases;
 
 public record LoginUseCaseRequest(
     string Email,
-    string Password) : ICommand;
+    string Password) : IUseCaseCommand;
 
 public record LoginUseCaseResponse(
     string AccessToken);
 
 public class LoginUseCase(
     UserManager<User> userManager,
-    IConfiguration configuration) : IHandler<LoginUseCaseRequest, Result<LoginUseCaseResponse>>
+    IConfiguration configuration) : IUseCaseHandler<LoginUseCaseRequest, Result<LoginUseCaseResponse>>
 {
     public async Task<Result<LoginUseCaseResponse>> Handle(
         LoginUseCaseRequest request,

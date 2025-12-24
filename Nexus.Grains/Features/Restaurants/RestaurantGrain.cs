@@ -1,5 +1,4 @@
 ﻿using Nexus.Grains.Features.Restaurants.State;
-using Nexus.Infrastructure;
 
 namespace Nexus.Grains.Features.Restaurants;
 

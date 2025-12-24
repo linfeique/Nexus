@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Nexus.Api.Features.Restaurants.Handlers;
 using Nexus.Grains.Features.Restaurants;
+using Wolverine;
 
 namespace Nexus.Api.Features.Restaurants;
 
@@ -34,10 +36,11 @@ public class RestaurantsController : ControllerBase
     public async Task<IActionResult> AddOrder(
         Guid id,
         [FromBody] AddOrderRequest request,
-        IClusterClient clusterClient)
+        IMessageBus messageBus)
     {
-        var restaurantGrain = clusterClient.GetGrain<IRestaurantGrain>(id);
-        await restaurantGrain.AddOrder(request.OrderId, request.DesirableDeliveryPrice, request.Notes);
+        // var restaurantGrain = clusterClient.GetGrain<IRestaurantGrain>(id);
+        // await restaurantGrain.AddOrder(request.OrderId, request.DesirableDeliveryPrice, request.Notes);
+        await messageBus.PublishAsync(new CreateOrderCommand());
         return Ok();
     }
 }

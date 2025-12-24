@@ -1,11 +1,14 @@
 using System.Reflection;
 using System.Text;
+using DotPulsar;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Nexus.Api.Abstractions;
+using Nexus.Api.Abstractions.UseCases;
 using Nexus.Api.Auth;
-using Nexus.Infrastructure.Abstractions;
+using Nexus.Api.Extensions;
 using Npgsql;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -13,6 +16,8 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Orleans.Configuration;
 using Scalar.AspNetCore;
+using Wolverine;
+using Wolverine.Pulsar;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +49,19 @@ builder.Services.AddDbContext<AuthDbContext>(options =>
 builder.Services
     .AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<AuthDbContext>();
+
+builder.UseWolverine(options =>
+{
+    options.UsePulsar(p =>
+    {
+        var pulsarUri = new Uri(builder.Configuration.GetConnectionString("Pulsar") 
+                                ?? throw new InvalidOperationException());
+        p.ServiceUrl(pulsarUri);
+    });
+    
+    options.AddSubscribeOrderMessages();
+    options.AddPublishOrderMessages();
+});
 
 builder.Services.AddAuthentication(options =>
     {
@@ -115,7 +133,7 @@ var handlers = Assembly.GetExecutingAssembly()
     .GetTypes()
     .Where(d => d is { IsClass: true, IsAbstract: false } 
                 && d.GetInterfaces().Any(i => i.IsGenericType && 
-                                              i.GetGenericTypeDefinition() == typeof(IHandler<,>)));
+                                              i.GetGenericTypeDefinition() == typeof(IUseCaseHandler<,>)));
 
 foreach (var implType in handlers)
 {
@@ -123,7 +141,7 @@ foreach (var implType in handlers)
 
     var serviceTypes = implType.GetInterfaces()
         .Where(i => i.IsGenericType &&
-                    i.GetGenericTypeDefinition() == typeof(IHandler<,>))
+                    i.GetGenericTypeDefinition() == typeof(IUseCaseHandler<,>))
         .ToArray();
 
     foreach (var serviceType in serviceTypes)

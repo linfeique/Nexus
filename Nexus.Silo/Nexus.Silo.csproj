@@ -19,11 +19,12 @@
       <PackageReference Include="Microsoft.Orleans.Clustering.AdoNet" Version="9.2.1" />
       <PackageReference Include="Microsoft.Orleans.Persistence.AdoNet" Version="9.2.1" />
       <PackageReference Include="Microsoft.Orleans.Server" Version="9.2.1" />
+      
+      <PackageReference Include="Npgsql" Version="10.0.0" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Nexus.Grains\Nexus.Grains.csproj" />
-      <ProjectReference Include="..\Nexus.Infrastructure\Nexus.Infrastructure.csproj" />
     </ItemGroup>
 
     <ItemGroup>

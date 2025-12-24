@@ -8,13 +8,14 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Ardalis.Result.AspNetCore" Version="10.1.0" />
       <PackageReference Include="Microsoft.Orleans.Core.Abstractions" Version="9.2.1" />
       <PackageReference Include="Microsoft.Orleans.Runtime" Version="9.2.1" />
       <PackageReference Include="Microsoft.Orleans.Sdk" Version="9.2.1" />
     </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\Nexus.Infrastructure\Nexus.Infrastructure.csproj" />
-    </ItemGroup>
+<!--    <ItemGroup>-->
+<!--      <ProjectReference Include="..\Nexus.Infrastructure\Nexus.Infrastructure.csproj" />-->
+<!--    </ItemGroup>-->
 
 </Project>
