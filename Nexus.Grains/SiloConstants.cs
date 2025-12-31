@@ -2,5 +2,5 @@
 
 public class SiloConstants
 {
-    public const string StorageName = "NexusServiceDev";
+    public const string StorageName = "NexusStorageDev";
 }

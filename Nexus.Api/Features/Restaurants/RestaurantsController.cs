@@ -12,12 +12,12 @@ namespace Nexus.Api.Features.Restaurants;
 [Authorize]
 public class RestaurantsController : ControllerBase
 {
-    [HttpGet("{id:guid}")]
+    [HttpGet]
     public async Task<IActionResult> Get(
-        Guid id,
-        IClusterClient clusterClient)
+        IActor actor,
+        IGrainFactory grainFactory)
     {
-        var restaurantGrain = clusterClient.GetGrain<IRestaurantGrain>(id);
+        var restaurantGrain = grainFactory.GetGrain<IRestaurantGrain>(actor.RestaurantId);
         return Ok(await restaurantGrain.GetState());
     }
 

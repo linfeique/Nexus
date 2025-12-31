@@ -1,14 +1,17 @@
 ﻿using Ardalis.Result;
 using Microsoft.AspNetCore.Identity;
-using Nexus.Api.Abstractions;
 using Nexus.Api.Abstractions.UseCases;
 using Nexus.Api.Auth;
+using Nexus.Grains.Features.Restaurants;
 
 namespace Nexus.Api.Features.Users.Cases;
 
 public record RegisterUseCaseRequest(
     string Email,
-    string Password) : IUseCaseCommand;
+    string Password,
+    string RestaurantName,
+    string RestaurantAddress,
+    string RestaurantCnpj) : IUseCaseCommand;
 
 public record RegisterUseCaseResponse(
     Guid UserId,
@@ -17,7 +20,8 @@ public record RegisterUseCaseResponse(
 
 public class RegisterUseCase(
     AuthDbContext dbContext,
-    UserManager<User> userManager) : IUseCaseHandler<RegisterUseCaseRequest, Result<RegisterUseCaseResponse>>
+    UserManager<User> userManager,
+    IClusterClient grainFactory) : IUseCaseHandler<RegisterUseCaseRequest, Result<RegisterUseCaseResponse>>
 {
     public async Task<Result<RegisterUseCaseResponse>> Handle(
         RegisterUseCaseRequest request,
@@ -39,6 +43,9 @@ public class RegisterUseCase(
         var addToRoleResult = await userManager.AddToRoleAsync(user, Roles.User);
         if (!addToRoleResult.Succeeded)
             return Result.Invalid(addToRoleResult.Errors.Select(e => new ValidationError(e.Code, e.Description)));
+        
+        var restaurantGrain = grainFactory.GetGrain<IRestaurantGrain>(user.RestaurantId);
+        await restaurantGrain.Initialise(request.RestaurantName, request.RestaurantAddress, request.RestaurantCnpj);
         
         await transaction.CommitAsync(ct);
         
