@@ -38,11 +38,6 @@
       STORAGE_NAME: "NexusStorageDev"
       STORAGE_INVARIANT: "Npgsql"
       CONNECTIONSTRINGS__ORLEANS: "Host=postgres;Port=5432;Database=NexusOrleans;Username=postgres;Password=123456"
-      
-      OTEL_RESOURCE_ATTRIBUTES: "service.name=nexus-api,service.namespace=nexus-group,deployment.environment=development"
-      OTEL_EXPORTER_OTLP_ENDPOINT: "https://otlp-gateway-prod-sa-east-1.grafana.net/otlp"
-      OTEL_EXPORTER_OTLP_HEADERS: "Authorization=Basic MTQxMjc5MTpnbGNfZXlKdklqb2lNVFUyTnpBMk9DSXNJbTRpT2lKdVpYaDFjeTEwYjJ0bGJpSXNJbXNpT2lKSVpESXpXamhvTlRjMFF6UkxaM1EzUWtoVVF6WnBORllpTENKdElqcDdJbklpT2lKd2NtOWtMWE5oTFdWaGMzUXRNU0o5ZlE9PQ=="
-      OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
     ports:
       - "11111:11111" # Silo port
       - "30000:30000" # Gateway port
@@ -62,11 +57,6 @@
       STORAGE_NAME: "NexusStorageDev"
       STORAGE_INVARIANT: "Npgsql"
       CONNECTIONSTRINGS__ORLEANS: "Host=postgres;Port=5432;Database=NexusOrleans;Username=postgres;Password=123456"
-
-      OTEL_RESOURCE_ATTRIBUTES: "service.name=nexus-api,service.namespace=nexus-group,deployment.environment=development"
-      OTEL_EXPORTER_OTLP_ENDPOINT: "https://otlp-gateway-prod-sa-east-1.grafana.net/otlp"
-      OTEL_EXPORTER_OTLP_HEADERS: "Authorization=Basic MTQxMjc5MTpnbGNfZXlKdklqb2lNVFUyTnpBMk9DSXNJbTRpT2lKdVpYaDFjeTEwYjJ0bGJpSXNJbXNpT2lKSVpESXpXamhvTlRjMFF6UkxaM1EzUWtoVVF6WnBORllpTENKdElqcDdJbklpT2lKd2NtOWtMWE5oTFdWaGMzUXRNU0o5ZlE9PQ=="
-      OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
     ports:
       - "5000:8080"
     networks:
