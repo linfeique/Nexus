@@ -3,14 +3,17 @@ using Ardalis.Result;
 
 namespace Nexus.Api.Features.Restaurants.Handlers;
 
-public record CreateOrderCommand();
+public record CreateOrderCommand(
+    Guid RestaurantId,
+    Guid OrderId,
+    decimal DesirableDeliveryPrice,
+    string Notes);
 
-public class CreateOrderHandler(ILogger<CreateOrderHandler> logger)
+public class CreateOrderHandler(
+    IGrainFactory grainFactory)
 {
     public Task<Result> Handle(CreateOrderCommand request, CancellationToken ct = default)
     {
-        logger.LogInformation("Received CreateOrderCommand: {Payload}", JsonSerializer.Serialize(request));
-        
         return Task.FromResult(Result.Success());
     }
 }
